@@ -1,6 +1,6 @@
 // -----< Global variables >-----
-global ver is "0.1".
-
+global ver is "0.15". global name is "SkiliaOS".
+global path is "0:/lib/skiylia".
 global beep is char(7). global nl is char(10).
 global quote is char(34). global comma is char(44).
 
@@ -9,11 +9,38 @@ global quote is char(34). global comma is char(44).
 function type { parameter txt, x is 0, y is 0, ts is 0. local p is 0.
   for t in txt { if t = nl { set p to 0. set y to y+1. }. print t at(x+p, y). set p to p+1. wait ts. }. }.
 
-// clear the screen
-clearscreen.
+// type a staus message to the screen
+function typestatus { parameter sname, sstat, xc, yc. type(sname:padright(10)+": "+sstat, xc, yc).}
+
+// load a file
+function load { parameter file. if exists(file) { runoncepath(file). return true. } }
+
+// load a module
+function loadmodule { parameter name, x, y, rel is "".
+  local l is load((path+"/"+rel+"/"+name):replace("//", "/")).
+  typestatus("Module",name+(choose " loaded" if l else " failed"), x, y). return l. }
+
+// reboot if we ever change connectedness.
+clearscreen. on homeconnection:isconnected { reboot. preserve. }
 
 // show the skiylia version
-type("Skiylia Operating System", 3, 3).
-type("Version "+ver, 3, 4).
+typestatus("Booting", "Skiylia Operating System", 3, 3).
+typestatus("Version", ver, 3, 4).
 
-print beep.
+// load modules
+loadmodule("skiylia_lib", 3, 5).
+loadmodule("skiylia_ui", 3, 6).
+
+// ensure we have a bootable ui
+addbootui(3, 7).
+
+// complete
+type("Load complete"+beep, 3, 9).
+loadcircle(0.5, 3, 10). clearscreen.
+
+// Ui drawing
+print "":padright(w):replace(" ","═").
+print "⟪"+name+" v"+ver+"⟫" at(w-(6+ver:length+name:length), 0).
+
+// execute the main skiylia loop.
+until false.
