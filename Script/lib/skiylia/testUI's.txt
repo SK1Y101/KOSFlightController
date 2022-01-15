@@ -1,0 +1,37 @@
+0════════════════════════════════⟪SkiyliaOS v0.2⟫══
+1 MET: 45:12:04:34                    EC:  450.2kJ
+2 Alder VI                       Escaping - Kerbin
+3══════════════════════════════════════════════════
+4    Main Menu                       Page 1 / 1
+5
+6 >> Flight Information
+7    -
+8    Mission Planner
+9    Mission Simulator
+0    -
+1    Orbit Visualisation
+2    -
+3    Reboot
+4    Exit
+5
+6
+7
+8
+9
+0
+1
+2
+3
+4
+5
+6
+7
+8
+9    ==========================================
+0    Displays relevant information about the
+1    current vessel.
+2
+3══════════════════════════════════════════════════
+4 DSK: 4232 / 5000 B
+5 Con: KSC
+6══════════════════════════════════════════════════

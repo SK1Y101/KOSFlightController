@@ -1,5 +1,17 @@
 // A set of skiylia library functions that will be used across scripts.
 
+// -----< File manipulation >-----
+
+// fetch a list of files in a given directory
+function fetchfiles {
+  // fetch the target and working directories
+  parameter dir. local cwd is path().
+  // move to the target dir, fetch the files, and move back
+  cd(dir). list files in f. cd(path).
+  // return
+  return f.
+}
+
 // overwrite the boot file of a craft
 function writeboot {
   // inputs
@@ -24,8 +36,8 @@ function addbootui {
   if core:bootfilename = "boot/minui.ks" { typestatus("BootUi","Installed",xc,yc). return.}
   // fetch the maximum capacity for the boot volume
   local cap is volume(1):capacity.
-  // fetch the working path, move to the boot folder, fetch ui's, and return to working dir
-  local cwd is path(). cd("0:/lib/skiylia/minui"). list files in uis. cd(cwd).
+  // fetch the minui files
+  local uis is fetchfiles("0:/lib/skiylia/minui").
   // iterate over all found interfaces
   local bootable is list(). for ui in uis {
     // if the file is bootable,
@@ -48,12 +60,39 @@ function addbootui {
   typestatus("BootUi","Failed to install",xc,yc).
 }
 
+// -----< Maths functions >-----
+
+// faster tanh approximation
+function tanh {
+  // fetch input and absolute value
+  parameter x. local a is abs(x).
+  // small angle approximation
+  if a < .2 { return x. }
+  // large angle approximation
+  if a > 3 { return x / a. }
+  // expansion approximation
+  return x * (27 + x*X) / (27 + 9*x*x).
+}
+
+// -----< Vessel information functions >-----
+function fetchresource {
+  // resource name
+  parameter resname.
+  // itterate over the resources
+  for res in ship:resources {
+    // if we have a match, return the reference.
+    if res:name = resname {
+      return res.
+    }
+  }
+}
+
 // hoverscribt
 function testing {
 
   set bnd to ship:bounds.
-  lock h to round(bnd:bottomaltradar,1).
-  lock g to body:mu / (body:radius + h)^2.
+  lock height to round(bnd:bottomaltradar,1).
+  lock g to body:mu / (body:radius + height)^2.
   lock a to maxthrust / mass.
   lock pitch to vang(facing:vector, up:vector).
 
@@ -62,12 +101,6 @@ function testing {
   set targetspeed to -2.
 
   wait 10.
-
-  function tanh { parameter x.
-    local a is abs(x).
-    if a < .2 {return x. }
-    else if a > 3 { return x / a. }
-    return x * (27 + x*x) / ( 27 + 9*x*x). }
 
   // keep the script running
   until false {

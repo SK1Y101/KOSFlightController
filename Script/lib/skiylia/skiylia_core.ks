@@ -1,5 +1,5 @@
 // -----< Global variables >-----
-global ver is "0.15". global name is "SkiliaOS".
+global ver is "0.2". global name is "SkiliaOS".
 global path is "0:/lib/skiylia".
 global beep is char(7). global nl is char(10).
 global quote is char(34). global comma is char(44).
@@ -21,7 +21,7 @@ function loadmodule { parameter name, x, y, rel is "".
   typestatus("Module",name+(choose " loaded" if l else " failed"), x, y). return l. }
 
 // reboot if we ever change connectedness.
-clearscreen. on homeconnection:isconnected { reboot. preserve. }
+//clearscreen. on homeconnection:isconnected { reboot. return true. }
 
 // show the skiylia version
 typestatus("Booting", "Skiylia Operating System", 3, 3).
@@ -38,9 +38,8 @@ addbootui(3, 7).
 type("Load complete"+beep, 3, 9).
 loadcircle(0.5, 3, 10). clearscreen.
 
-// Ui drawing
-print "":padright(w):replace(" ","═").
-print "⟪"+name+" v"+ver+"⟫" at(w-(6+ver:length+name:length), 0).
+// draw the main UI.
+drawUI().
 
 // execute the main skiylia loop.
 until false.
