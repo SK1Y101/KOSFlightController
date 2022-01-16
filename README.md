@@ -2,7 +2,7 @@
 My detail flight controller for the Kerbal Space Program Mod "Kerbal Operating System", designed for my Realism Overhaul Save
 
 ## What does it do?
-As of version 0.3, not a lot!
+As of version 0.35, not a lot!
 
 ### Boot-up Sequence
 On opening a craft (be that switching from the tracking station, launching from the pad, or something else), this will begin.
@@ -26,6 +26,7 @@ This incomplete interface will display relevant and constantly updating informat
 - Stored Power
 - Flight Status
 - Disk Capacity
+- Connection status
 
 In the centre of the screen sits all interface elements of Skiylia. For the main menu, this is a list of available functionality, with a description as to what each function does.
 
@@ -39,7 +40,7 @@ Below is an Example of the current Main Interface Layout. Note the large central
     MAIN MENU                          Page 1 / 1
 
 
- >> Test Interface
+ >> Flight Information
     -
     Reboot
     Shutdown
@@ -60,12 +61,60 @@ Below is an Example of the current Main Interface Layout. Note the large central
 
 
  ================================================
- Testing Skiylia menu functionality
-
+ A Useful interface that shows relevant flight
+ information of the current vessel.
 
 
 ══════════════════════════════════════════════════
- DSK Used:  768 / 5000 B
- DSK Free: 4232 / 5000 B
+ DSK: 768B / 5.00MiB Used             15.36% Full
+ Con: Space Centre
+══════════════════════════════════════════════════
+```
+
+### Sub interfaces
+By using the arrow keys on the main menu, a user can select each of the sub-interfaces to open, or to reboot/shutdown the flight computer.
+
+currently, only the Flight Information display is available, and as the description at the bottom of the main interface states, it will show relevant information about the current vessel.
+
+Pressing the `Home` Button while in this view will take you back to the main interface, though only while the vessel is connected to the Space centre, as these scripts are not stored in the vessel storage memory.
+
+The current layout of the Flight information display is given below. Note how the updating elements listed previously are still visible.
+```
+════════════════════════════════⟪SkiyliaOS v0.2⟫══
+ MET: 14:15:53:21                    EC: 1475.9kJ
+ Test Craft V                            Orbiting
+══════════════════════════════════════════════════
+
+    Flight Information
+
+    Orbital Elements
+     Sma: 703.98Km
+     Ecc: 2.5*10^-6
+     Inc: 0.02°
+     Arg: 120.56°
+     Lan: 45.80°
+     Tru: 182.00°
+
+    Orbital Information
+     Bdy: Kerbin
+     Apo: 703.99Km
+     Per: 703.98Km
+     Vel: 3.002Km/s
+     Obt: 1:45:01:21
+     Nxt: None
+
+    Vessel Information
+     Alt: 124.19Km
+     Spd: 2.741Km/s
+     SΔv: 1.290Km/s
+     VΔv: 1.290Km/s
+     Drw: -1.43KW
+
+
+    Press [ Home ] to return
+
+══════════════════════════════════════════════════
+ DSK: 768B / 5.00MiB Used             15.36% Full
+ Con: Space Centre
 ══════════════════════════════════════════════════
 ```

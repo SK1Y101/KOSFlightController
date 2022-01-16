@@ -83,7 +83,7 @@ function addbootui {
 function shutdownskiylia { set done to True.}
 
 // reboot skiylia
-function rebootskiylia { reboot.}
+function rebootskiylia { reboot. }
 
 // -----< Maths functions >-----
 

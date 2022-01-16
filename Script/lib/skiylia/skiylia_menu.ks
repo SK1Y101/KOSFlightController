@@ -33,7 +33,7 @@ function mainInterface {
       if keypressed = 2 { updatemenu(mainmenu, bbox, 0,-1). }
       if keypressed = 3 { updatemenu(mainmenu, bbox, 0, 1). }
       // if the user pressed enter
-      if keypressed = 4 { if execmenu(mainmenu) { drawmenu(mainmenu, "Main menu", bbox). } }
+      if keypressed = 4 { selectmenu(mainmenu, "Main menu", bbox). }
     }
     // wait for one physics tick
     wait 0.
@@ -79,7 +79,7 @@ function initmenulist {
 // draw a menu
 function drawmenu {
   // fetch the options, bounding box, as well as current page to show.
-  parameter options, title, bbox. local ppage is bbox[3]-7.
+  parameter options, title, bbox. local ppage is bbox[3]-7. cls().
   // print the title and description deliminator
   print tocase(title, 2):padright(bbox[2]-bbox[0]-2) at(bbox[0]+3, bbox[1]). print repeat("=", bbox[3]+1) at(bbox[0], bbox[1]+bbox[3]-4).
   // ensure we have the required options menu type
@@ -105,7 +105,7 @@ function drawmenuupdate {
     local pmarklen is (""+opt:pages):length. local pmark is padded((page+1), pmarklen).
     print pmark at(bbox[0]+bbox[2]-pmarklen-5, bbox[1]).
     // update the page with the new page items
-    for n in range(0, opt[page]:length) { print tocase(opt[page][n][0]:trim, 3) at(bbox[0]+2, bbox[1]+n+3).}
+    for n in range(0, opt[page]:length) { print tocase(opt[page][n][0]:trim, 3) at(bbox[0]+3, bbox[1]+n+3).}
     // then ensure we change the description
     set olditem to -1.
   }
@@ -154,11 +154,11 @@ function updatemenu {
 }
 
 // execute the function related to the menu item
-function execmenu {
+function selectmenu {
   // fetch the menu
-  parameter opt.
+  parameter opt, title, bbox.
   // fetch the function
   local func is opt[opt:page][opt:item][2].
-  // and execute. if we executed a script, this will return true to redraw the main menu
-  return func().
+  // clear the screen and execute. if we executed an interface, redraw the previous menu
+  boop(). cls(). if func() { drawmenu(opt, title, bbox). }
 }
