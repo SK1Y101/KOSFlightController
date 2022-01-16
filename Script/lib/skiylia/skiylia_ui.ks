@@ -16,7 +16,7 @@ function drawBaseUI {
   print shipname at(1, 2).
   // draw the disk usage
   local vol is volume(1). local cap is vol:capacity. lock fs to vol:freespace.
-  print "DSK: "+repeat(" ", cap:tostring:length)+"B / "+cap+"B Free" at(1, h-2).
+  print "DSK: " at(1, h-2).
   print "% Full" at(w-7, h-2).
   // draw the connection status
   print "CON: " at(1, h-1).
@@ -37,7 +37,7 @@ function drawBaseUI {
   // Ship status
   function drawStt { print tocase(status, 3):padleft(12) at(w - 12 - 1, 2). return true.}
   // Disk capacity
-  function drawDsk { print (cap-fs):tostring:padleft(cap:tostring:length) at(6, h-2).
+  function drawDsk { print (tobi(cap-fs)+"B / "+tobi(cap)+"B Used"):padright(30) at(6, h-2).
     print toDP(100-100*fs/cap, 2):padleft(6) at(w-13, h-2).}
   // Control connection
   function drawCon { local contxt is choose "No Signal" if not con else (choose "Space Center" if con=1 else "Remote").
@@ -86,6 +86,64 @@ function fetchInterfaces {
 
 // -----< Nice formatting >-----
 
+// print over an entire line
+function printline { parameter s, xc, yc. print s:padright(w-xc) at(xc, yc). }
+
+// format a number with a binary suffix
+function tobi {
+  // fetch the number and the number of places to show
+  parameter num, places is 2.
+  // list the binary prefixes
+  local prefs is list("", "Ki", "Mi", "Gi", "Ti", "Pi", "Ei", "Zi", "Yi").
+  // ensure num is a number
+  if num:istype("string") { set num to num:toscalar(). }
+  // fetch the power of 1024 that the number fits into
+  local pow is choose min(8, max(0, floor(log10(abs(num)) / log10(1024)))) if num else 0.
+  // return the number with the prefix
+  return toDP(num / 1024^pow, choose places if pow else 0)+prefs[pow].
+}
+
+// format a number with an si suffix
+function tosi {
+  // fetch the number and the number of places to show
+  parameter num, places is 2.
+  // list the si prefixes
+  local prefs is list("y", "z", "a", "f", "p", "n", "μ", "m", "", "K", "M", "G", "T", "P", "E", "Z", "Y").
+  // ensure num is a number
+  if num:istype("string") { set num to num:toscalar(). }
+  // fetch the power of 1000 that the number fits into
+  local pow is choose min(8, max(-8, floor(log10(abs(num)) / 3))) if num else 0.
+  // return the number with the prefix
+  return toDP(num / 1000^pow, places)+prefs[pow+8].
+}
+
+// format a number with a decimal suffix
+function todi {
+  // fetch the number and the number of places to show
+  parameter num, places is 2, thou is false.
+  // ensure num is a number
+  if num:istype("string") { set num to num:toscalar(). }
+  // fetch the power of 10 that the number fits into
+  local pow is choose floor(log10(abs(num))) if num else 0.
+  // if we are dividing into thousands, find the nearest
+  if thou { set pow to 3 * floor(pow / 3). }
+  // return the number with the prefix
+  return toDP(num / 10^pow, places)+"*10^"+pow.
+}
+
+// format a number as a string with a given number of places
+function toDP {
+  // inputs
+  parameter num, place is 1.
+  // convert to string
+  set num to round(num, place)+"".
+  // ensure we have enough decimal places
+  if place > 0 { if not num:contains(".") { set num to num+".". }
+    set num to num:padright(place + num:find(".") + 1):replace(" ","0"). }
+  // otherwise return the number
+  return num.
+}
+
 // lef pad an item
 function padded {
   // fetch the string to pad, and the places to pad to
@@ -99,29 +157,15 @@ function padded {
   return (s+""):padleft(places).
 }
 
-// format a number as a string with a given number of places
-function toDP {
-  // inputs
-  parameter num, place is 1.
-  // convert to string
-  local num is round(num, place)+"".
-  // add an additional zero if needed
-  if place > 0 and not num:contains(".") {
-    return num+".":padright(place+1):replace(" ","0").
-  }
-  // otherwise return the number
-  return num.
-}
-
 // convert a string to a capitalised version
 function capitalise {
-  parameter s. local out is "".
+  parameter s. local out is list().
   // itterate on the string
   for str in s:split(" ") {
     // capitalise the start and add to out
-    set out to out+" "+str[0]:toupper+str:remove(0,1):tolower.
+    out:add(str[0]:toupper+str:remove(0,1):tolower).
   }
-  return out.
+  return out:join(" ").
 }
 
 // convert a string with underscores to one with spaces
@@ -197,6 +241,8 @@ function boxedstring {
 }
 
 // -----< Basic Functions >-----
+
+function boop { print beep at(1,1). }
 
 // show a short spinning graphic
 function loadcircle {
