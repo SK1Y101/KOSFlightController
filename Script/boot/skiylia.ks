@@ -10,5 +10,11 @@ wait until ship:unpacked. CORE:PART:GETMODULE("kOSProcessor"):DOEVENT("Open Term
 clearscreen. print "Loading..." at(3, 3).
 wait .5.
 
-// launch the main skiylia files.
-runpath("0:/lib/skiylia/skiylia_core").
+// launch the main skiylia files if we have a connection. (The vessel may have lost access to the archive since the last reboot)
+if homeconnection:isconnected {
+  runpath("0:/lib/skiylia/skiylia_core").
+}
+// otherwise reboot
+else {
+  reboot.
+}

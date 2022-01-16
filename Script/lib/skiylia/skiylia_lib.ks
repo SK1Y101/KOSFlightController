@@ -12,6 +12,23 @@ function fetchfiles {
   return f.
 }
 
+// fetch data from a non-json file
+function fromfile {
+  // fetch the filename, string to search for, default return and character to end the search with
+  parameter fname, search, echar is char(10), default is "".
+  // fetch the file content
+  local s is open(fname):readall:string.
+  // ensure our search is in the file
+  if s:contains(search) {
+    // fetch the string after that point
+    local str is s:split(search)[1].
+    // return everything up to the endchar, or EOF if that dosen't exist
+    return str:substring(0, min(str:length, str:find(echar))):trim:trimend.
+  }
+  // return the default
+  return default.
+}
+
 // overwrite the boot file of a craft
 function writeboot {
   // inputs
@@ -53,12 +70,20 @@ function addbootui {
       // add this bootfile
       writeboot("0:/lib/skiylia/minui/boot"+bsize, "minui").
       // show a success message and stop the loop
-      typestatus("BootUi:",bsize+"B UI Installed",xc,yc). return.
+      typestatus("BootUi",bsize+" Installed",xc,yc). return.
     }
   }
   // show a failure message
   typestatus("BootUi","Failed to install",xc,yc).
 }
+
+// -----< Skiylia manipulation funcs >-----
+
+// cleanly shutdown skiylia
+function shutdownskiylia { set done to True.}
+
+// reboot skiylia
+function rebootskiylia { reboot.}
 
 // -----< Maths functions >-----
 
@@ -72,6 +97,12 @@ function tanh {
   if a > 3 { return x / a. }
   // expansion approximation
   return x * (27 + x*X) / (27 + 9*x*x).
+}
+
+// ceil of a number, because their function was too long
+function ceil {
+  parameter num, places is 0.
+  return ceiling(num, places).
 }
 
 // -----< Vessel information functions >-----

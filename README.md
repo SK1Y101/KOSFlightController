@@ -2,7 +2,7 @@
 My detail flight controller for the Kerbal Space Program Mod "Kerbal Operating System", designed for my Realism Overhaul Save
 
 ## What does it do?
-As of version 0.2, not a lot!
+As of version 0.3, not a lot!
 
 ### Boot-up Sequence
 On opening a craft (be that switching from the tracking station, launching from the pad, or something else), this will begin.
@@ -27,13 +27,22 @@ This incomplete interface will display relevant and constantly updating informat
 - Flight Status
 - Disk Capacity
 
-Below is an Example of the current Main Interface Layout. Note the large empty central section which will be filled over time.
+In the centre of the screen sits all interface elements of Skiylia. For the main menu, this is a list of available functionality, with a description as to what each function does.
+
+Below is an Example of the current Main Interface Layout. Note the large central section where all interface elements lie.
 ```
 ════════════════════════════════⟪SkiyliaOS v0.2⟫══
  MET: 45:12:04:34                    EC:  450.2kJ
  Test Craft VI                           Escaping
 ══════════════════════════════════════════════════
 
+    MAIN MENU                          Page 1 / 1
+
+
+ >> Test Interface
+    -
+    Reboot
+    Shutdown
 
 
 
@@ -50,15 +59,8 @@ Below is an Example of the current Main Interface Layout. Note the large empty c
 
 
 
-
-
-
-
-
-
-
-
-
+ ================================================
+ Testing Skiylia menu functionality
 
 
 
