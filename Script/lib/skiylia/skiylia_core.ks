@@ -1,5 +1,5 @@
 // -----< Global variables >-----
-global ver is "0.35". global name is "SkiliaOS".
+global ver is "0.4". global name is "SkiliaOS".
 global path is "0:/lib/skiylia".
 global beep is char(7). global nl is char(10).
 global quote is char(34). global comma is char(44).
@@ -22,26 +22,41 @@ function loadmodule { parameter name, x, y, rel is "".
   local l is load((path+"/"+rel+"/"+name):replace("//", "/")).
   typestatus("Module",name+(choose " loaded" if l else " failed"), x, y). return l. }
 
-// if we ever change connectedness, run the bootui
-clearscreen. //on homeconnection:isconnected { reboot. return true. }
+// enable the bootup sequence ui
+parameter bootup is 1.
 
-// show the skiylia version
-typestatus("Booting", "Skiylia Operating System", 3, 3).
-typestatus("Version", ver, 3, 4).
+// if we ever change connectedness, clear the screen and run the bootui
+on homeconnection:isconnected { reboot. return true. }
 
-// load modules
-loadmodule("skiylia_lib", 3, 5).
-loadmodule("skiylia_ui", 3, 6).
-loadmodule("skiylia_menu", 3, 7).
+if bootup<>0 {
+  // clear the screen
+  clearscreen.
 
-// ensure we have a bootable ui
-addbootui(3, 8).
+  // show the skiylia version
+  typestatus("Booting", "Skiylia Operating System", 3, 3).
+  typestatus("Version", ver, 3, 4).
 
-// complete
-type("Load complete", 3, 10).
-type("Loading main interface"+beep, 3, 11).
-loadcircle(0.5, 3, 12). clearscreen.
+  // load modules
+  loadmodule("skiylia_lib", 3, 5).
+  loadmodule("skiylia_ui", 3, 6).
+  loadmodule("skiylia_menu", 3, 7).
 
+  // ensure we have a bootable ui
+  addbootui(3, 8).
+
+  // complete
+  type("Load complete", 3, 10).
+  type("Loading main interface"+beep, 3, 11).
+  loadcircle(0.5, 3, 12). clearscreen.
+
+} else {
+  // if we have fastboot enabled, skip the pretty ui
+  load(path+"/skiylia_lib"). load(path+"/skiylia_ui").
+  load(path+"/skiylia_menu").
+}
+
+// ensure we can see our thingies.
+set showtrig to true.
 // draw the base UI.
 drawBaseUI().
 
@@ -50,3 +65,6 @@ drawBaseUI().
 
 // and finally execute the main interface
 mainInterface().
+
+// clear the screen when we're done
+clearscreen.

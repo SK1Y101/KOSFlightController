@@ -1,14 +1,12 @@
 // Menu name: Flight Information
-// Description: A Useful interface that shows relevant flight information of the current vessel.
-
-// clear the screen
-cls().
+// Description: A useful interface that shows relevant flight information for the current vessel.
+// location: 1
 
 // the back button
 lock back to checkinputkeys(list(ti:homecursor)) <> -1.
 
 // print the title and return info
-print "Flight Information" at(4, 5).
+print "Flight Information":toupper at(4, 5).
 print "Press [ Home ] to return" at(4, h-5).
 
 // print the orbital elements
@@ -31,11 +29,12 @@ print "Nxt:" at(5, 24). lock transit to choose obt:nextpatch:body:name if obt:ha
 
 // Vessel information
 print "Vessel Information" at(4, 27).
-print "Alt:" at(5, 29). set bnd to ship:bounds.
-print "Spd:" at(5, 30).
-print "SΔv:" at(5, 31).
-print "VΔv:" at(5, 32).
-print "Drw:" at(5, 33). lock b to ship:electriccharge.
+print "Mas:" at(5, 29).
+print "Alt:" at(5, 30). set bnd to ship:bounds. on stage { set bnd to ship:bounds. return true. }.
+print "Spd:" at(5, 31).
+print "SΔv:" at(5, 32).
+print "VΔv:" at(5, 33).
+print "Drw:" at(5, 34). lock b to ship:electriccharge.
 
 // keep updating while the user hasn't pressed home
 until false {
@@ -58,9 +57,10 @@ until false {
   printline(formtime(obt:period),                  10, 23).
   printline(capitalise(obt:transition + transit),  10, 24).
   // update the vessel information
-  printline(tosi(bnd:bottomaltradar, 3)+"m",                 10, 29).
-  printline(tosi(ship:velocity:surface:mag, 3)+"m/s",        10, 30).
-  printline(tosi(ship:deltav:asl, 3)+"m/s",                  10, 31).
-  printline(tosi(ship:deltav:vacuum, 3)+"m/s",               10, 32).
-  printline(tosi(60000*(b-p)/kuniverse:timewarp:rate, 3)+"W",10, 33).
+  printline(tosi(mass, 3)+"t",                               10, 29).
+  printline(tosi(bnd:bottomaltradar, 3)+"m",                 10, 30).
+  printline(tosi(ship:velocity:surface:mag, 3)+"m/s",        10, 31).
+  printline(tosi(ship:deltav:asl, 3)+"m/s",                  10, 32).
+  printline(tosi(ship:deltav:vacuum, 3)+"m/s",               10, 33).
+  printline(tosi(60000*(b-p)/kuniverse:timewarp:rate, 3)+"W",10, 34).
 }
