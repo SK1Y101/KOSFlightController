@@ -80,10 +80,29 @@ function addbootui {
 // -----< Skiylia manipulation funcs >-----
 
 // cleanly shutdown skiylia
-function shutdownskiylia { set done to True.}
+function shutdownskiylia { cls(). type("SkiyliaOS Shutdown", 3, 5). loadcircle(0.7, 3, 7). set done to true. }
 
 // reboot skiylia
 function rebootskiylia { reboot. }
+
+// -----< List manipulation >-----
+
+// reverse a list
+function reverse {
+  // fetch the list
+  parameter lis. local out is list().
+  // create a reverse itterator
+  local itter is lis:reverseiterator.
+  // and built the list backwards
+  until not itter:next { out:add(itter:value). }
+  return out.
+}
+
+// extend a list with another list
+function extend {
+  parameter l1, l2 is list().
+  if not l2:empty() { for x in l2 { l1:add(x). } }
+}
 
 // -----< Maths functions >-----
 

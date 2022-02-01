@@ -31,58 +31,30 @@ function drawBaseUI {
 
   // -----< Dynamic Elements >-----
   // mission time
-  function drawMet { print formtime(missiontime) at(6,1).}
+  function drawMet { print formtime(missiontime)+"   " at(6,1).}
   // Battery power
   function drawBat { local pow is toDP(ship:electriccharge):padleft(batlen). print pow at(w - pow:length - 3, 1).}
   // Ship status
-  function drawStt { print tocase(status, 3):padleft(12) at(w - 12 - 1, 2). return true.}
+  function drawStt { print tocase(status, 3):padleft(12) at(w - 12 - 1, 2).}
   // Disk capacity
   function drawDsk { print (tobi(cap-fs)+"B / "+tobi(cap)+"B Used"):padright(30) at(6, h-2).
     print toDP(100-100*fs/cap, 2):padleft(6) at(w-13, h-2).}
   // Control connection
-  function drawCon { local contxt is choose "No Signal" if not con else (choose "Space Center" if con=1 else "Remote").
+  function drawCon { local contxt is choose "No Signal" if not con else (choose "Space Centre" if con=1 else "Remote").
     print contxt:padright(20) at(6, h-1). }
 
   // -----< Update Triggers >-----
   // Update the mission time
-  on floor(missiontime) { drawMet(). return true.} drawMet().
+  on floor(missiontime) { if showtrig { drawMet(). return true.}} drawMet().
   // Update the electric charge
-  on round(ship:electriccharge, 1) { drawBat(). return true.} drawBat().
+  on round(ship:electriccharge, 1) { if showtrig { drawBat(). return true.}} drawBat().
   // update the ship status
-  on status { drawStt(). return true. } drawStt().
+  on status { if showtrig { drawStt(). return true.} } drawStt().
   // Update the disk capacity
-  on fs { drawDsk(). return true. } drawDsk().
+  on fs { if showtrig { drawDsk(). return true.} } drawDsk().
   // Update the connection status
-  on con { drawCon(). return true. } drawCon().
+  on con { if showtrig { drawCon(). return true.} } drawCon().
 }
-
-// function to draw the main interface of skiylia
-function fetchInterfaces {
-  // create a function to run a file
-  function rpath { parameter file. runpath(file). return true. }
-  // fetch all of the sub interfaces we can access
-  local ints is list().
-  for file in fetchfiles("0:/lib/skiylia/interfaces") {
-    // create the return list
-    local intdata is list().
-    // fetch the name
-    intdata:add(fromfile(file, "Menu Name:", char(10), file:name)).
-    // fetch the description
-    intdata:add(fromfile(file, "Description:")).
-    // and fetch the function for this file
-    intdata:add(rpath@:bind(file)).
-    // add this interface to the list
-    ints:add(intdata).
-  }
-  // add a spacer
-  ints:add("-").
-  // create the reboot command
-  ints:add(list("Reboot", "Reboot SkiyliaOS", rebootskiylia@)).
-  // create the shutdown command
-  ints:add(list("Shutdown", "Shutdown SkiyliaOS completely", shutdownskiylia@)).
-  // return
-  return ints.
-}.
 
 // -----< Nice formatting >-----
 
@@ -206,25 +178,41 @@ function printmultiline {
   }
 }
 
-// ensure a string fits within a rectangular area
-function boxedstring {
-  // fetch the string, height, width, and bewline breaking style
-  parameter s, wc, hc, justified is 1.
-  // if the length of the string is less than the width
-  if s:length <= wc { return s. }
+// convert an arbitary string to one that wraps over lines
+function stringToMultiline {
+  // fetch the string, allowed width, and justification type
+  parameter s, wc, justified is 1.
   // base output list
   local out is list().
-  // repeat
+  // repeat indefinitely
   until false {
-    // stop if we don't have enough characters for the next row
-    if s:length <= wc { out:add(s). break. }
-    // index of the newline split
-    local idx is choose wc if justified else s:substring(0, wc):findlast(" ").
-    // if we just cut off a word
-    if s[idx] <> " " { set s to s:insert(idx-1, "-"). }
-    // add the next row to the output, and remove from our string
+    // fetch the maximum string this line, and the guess index
+    local thisline is s:substring(0, min(wc, s:length)). local idx is wc.
+    // find the location of any linebreaks
+    local nidx is thisline:find(char(10)).
+    // if there is a newline, then split here
+    if nidx >= 0 { set idx to nidx. }
+    // if we don't have enough characters left to split, add
+    else if s:length <= wc { out:add(s). break. }
+    // otherwise
+    else {
+      // if we are not justified, find the new index
+      if not justified { set idx to thisline:findlast(" "). }
+      // if we just cut off a word, and there wasn't already a division, add a dividing mark
+      if (s[idx] <> " ") and (s[idx] <> "-") { set s to s:insert(idx-1, "-"). } }
+    // add the next row to the output, and remove the dealt with characters
     out:add(s:substring(0, idx)). set s to s:remove(0, idx):trim.
   }
+  // return the divided string
+  return out.
+}
+
+// ensure a string fits within a rectangular area
+function boxedstring {
+  // fetch the string, height, width, and newline breaking style
+  parameter s, wc, hc, justified is 1.
+  // fetch the divided string list
+  local out is stringToMultiline(s, wc, justified).
   // if the output list is longer than the maximum height
   if out:length >= hc {
     // trim the output
@@ -240,6 +228,35 @@ function boxedstring {
   return out:join(char(10)).
 }
 
+// scroll a string that doesn't fit into view
+function scrolledstring {
+  // fetch the string to add, the output list, width, height, and justification type
+  parameter ns, ol, wc, hc, justified is 1.
+  // convert the string to a newline list
+  local s is stringToMultiline(ns, wc, justified).
+  // extend our output list with the new string
+  for x in s { ol:add(x). }
+  // remove anything from the front if our length is too long
+  set ol to ol:sublist(max(0, ol:length - hc), ol:length).
+  // return the output string too
+  return ol:join(char(10)).
+
+  // convert the string to a newline list
+  local out is stringToMultiline(s, wc, justified).
+  // if the output string will be too tall
+  if out:length > hc { out:remove(out:length - hc). }
+  // make the final string by joining the newlines
+  return out:join(char(10)).
+}
+
+// use the multiline print and the scrolled string to have a pretty output log
+function logtoscreen {
+  // fetch the string, list of outputs, x, y, w, h coordinates of the area, and justification type
+  parameter s, out, xc, yc, wc, hc, js is 1.
+  // create the scrolled string (ensuring it is a string), and print it
+  printmultiline(scrolledstring(s+"", out, wc, hc, js), xc, yc).
+}
+
 // -----< Basic Functions >-----
 
 function boop { print beep at(1,1). }
@@ -253,7 +270,7 @@ function loadcircle {
 // clear a rectangle on the screen, defaults to the non-ui location
 function cls {
   // define the area needed to clear
-  parameter xc is 0, yc is 4, wc is w, hc is h-8.
+  parameter xc is 0, yc is 4, wc is w+1, hc is h-8.
   // create the clearing rows
   local row is repeat(" ", wc).
   // itterate over all needed rows
@@ -328,7 +345,7 @@ function checkinputkeys {
       // return the index of that input
       return keys:find(ch).
     }
-    // ptherwise, return the failure code
+    // otherwise, return the failure code
     return -1.
   }
   // ptherwise, return the failure code

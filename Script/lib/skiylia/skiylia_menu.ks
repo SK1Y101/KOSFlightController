@@ -13,35 +13,14 @@ global keylist is lexicon(
 
 // the main skiylia interface
 function mainInterface {
-  // fetch the available interfaces
-  local ints is fetchInterfaces().
   // define the bounding box of the menu
   local bbox is list(1, 5, w-1, h-10).
+  // fetch the available interfaces
+  local ints is fetchMainInterface(bbox).
   // draw the base main menu
   local mainmenu is drawmenu(ints, "Main menu", bbox).
-  // fetch the allowed keypresses
-  local keypress is fetchlexval(keylist, list("up", "down", "left", "right", "enter")).
-  // and the things that will execute forever
-  until done {
-    // check if we have an input to handle
-    local keypressed is checkinputkeys(keypress).
-    // if we do
-    if keypressed >= 0 {
-      // if the user changed the page/item
-      if keypressed = 0 { updatemenu(mainmenu, bbox,-1, 0). }
-      if keypressed = 1 { updatemenu(mainmenu, bbox, 1, 0). }
-      if keypressed = 2 { updatemenu(mainmenu, bbox, 0,-1). }
-      if keypressed = 3 { updatemenu(mainmenu, bbox, 0, 1). }
-      // if the user pressed enter
-      if keypressed = 4 { selectmenu(mainmenu, "Main menu", bbox). }
-    }
-    // wait for one physics tick
-    wait 0.
-  }
-  // show a shutdown sequence
-  cls().
-  type("SkiyliaOS Shutdown", 3, 5).
-  loadcircle(0.5, 3, 7). clearscreen.
+  // and do the menu keypress updatey thing
+  menuinputs("Main menu", mainmenu, bbox, true).
 }
 
 // How will menus work?
@@ -51,6 +30,98 @@ function mainInterface {
 // Enter to interact with the choice
 // Home to return to main ui, End to return to the previous page?
 
+// each menu option will be:
+// (name on menu, description, callback function)
+
+// function to fetch the main menu interfaces for skiylia
+function fetchMainInterface {
+  // fetch the bounding box, so that we can compute how many pages are needed
+  parameter bbox.
+  // create the spacer
+  local spacer is "-".
+  // create the reboot command
+  local bootcom is list("Reboot", "Reboot SkiyliaOS", rebootskiylia@).
+  // create the shutdown command
+  local shutcom is list("Shutdown", "Shutdown SkiyliaOS completely", shutdownskiylia@).
+  // create the list of functions to add
+  local bot_func is list(spacer, bootcom, shutcom).
+  // fetch the available interfaces
+  local ints is fetchInterfaces().
+  // add our functions to the bottom of every page
+  set ints to addToPage(ints, bbox, bot_func).
+  // return the interfaces
+  return ints.
+}
+
+// function to adding certain options to the bottom or top of every page
+function addToPage {
+  // fetch the bottom and top functions that should be added
+  parameter ints, bbox, bfunc is list(), tfunc is list(). local ppage is bbox[3]-7.
+  // reverse the lists, so that we insert correctly
+  local rbfunc is reverse(bfunc). local rtfunc is reverse(tfunc).
+  // itterate over the options
+  local p is 0. until p*ppage > ints:length {
+    // fetch the starting and ending indicies
+    local sidx is ppage*(p). local eidx is ppage*(p+1) - bfunc:length.
+    // insert the starting functions
+    for x in rtfunc { ints:insert(sidx, x). }
+    // if this page isn't full, append the final values
+    if eidx > ints:length { for x in bfunc { ints:add(x). } }
+    // otherwise insert the ending functions
+    else { for x in rbfunc { ints:insert(eidx, x). } }
+    // increment the page number
+    set p to p+1.
+  }
+  return ints.
+}
+
+// function to fetch available interfaces from a directory
+function fetchInterfaces {
+  // fetch the available interfaces from a specific directory, as well as the function to bind things to
+  parameter dir is "0:/lib/skiylia/interfaces", intfunc is interfaceFromFile@.
+  // fetch all of the sub interfaces we can access
+  local ints is list(). local locs is list(). local maxloc is 0.
+  for file in fetchfiles(dir) {
+    // create the menu object for the file
+    local intdata is intfunc(file).
+    // fetch the menu location, keeping track of the largest given
+    local thisloc is fromfile(file, "location:", char(10), ""+(maxloc+1)):toscalar().
+    set maxloc to max(maxloc, thisloc). locs:add(thisloc).
+    // add this interface to the list
+    ints:add(intdata).
+  }
+  // return the interface list,
+  return sortInts(ints, locs, maxloc+1).
+}.
+
+// the standard function to fetch interface infromation from a file
+function interfaceFromFile {
+  // fetch the file, and the execution function
+  parameter file. local function rpath { parameter file. runpath(file). return true. }
+  // return the name and description of this file here
+  return list(fromfile(file, "Menu Name:", char(10), file:name),
+              fromfile(file, "Description:"),
+              // bind the 'enter' function too
+              rpath@:bind(file)).
+}
+
+// sort a list according to a secondary list of locations
+function sortInts {
+  // fetch the list of interfaces as well as their maximum length
+  parameter lis, loc, mloc is -1. local sor is list().
+  // ensure mloc makes sense
+  set mloc to max(mloc, lis:length).
+  // itterate over the maximu length
+  for x in range(mloc) {
+    // if this index is a valid choice, add the interface
+    if loc:contains(x) { sor:add(lis[loc:find(x)]). }
+    // otherwise, add a spacer
+    else { sor:add("-"). }
+  }
+  // return the sorted interface list
+  return sor.
+}
+
 // convert a list of options into a menu list
 function initmenulist {
   // fetch the available options, and options per page.
@@ -59,9 +130,11 @@ function initmenulist {
   local out is lexicon(). local p is 0.
   // keep going until the list is empty
   until options:empty {
+    // remove any spacers from the start of each page
+    until not (options[0] = "-") { options:remove(0). }
     // fetch the number of options this page
     local n is min(ppage, options:length).
-    // add thos options to the output
+    // add those options to the output
     out:add(p, options:sublist(0, n)).
     // and remove the options from the original list
     for x in range(0, n) { options:remove(0). }
@@ -159,6 +232,47 @@ function selectmenu {
   parameter opt, title, bbox.
   // fetch the function
   local func is opt[opt:page][opt:item][2].
-  // clear the screen and execute. if we executed an interface, redraw the previous menu
+  // clear the screen and execute. if we executed an interface (the function returned 0), redraw the previous menu
   boop(). cls(). if func() { drawmenu(opt, title, bbox). }
+}
+
+// function to check for menu inputs
+function menuinputs {
+  // fetch the details specific to this menu
+  parameter thisname, thismenu, thisbbox, ismainmenu is false.
+  // fetch any extra inputs the user might be able to enter
+  parameter extrakeys is list(), extrafuncs is list(). local back is false.
+  // fetch the standard keypress array
+  local kp is fetchlexval(keylist, list("home", "up", "down", "left", "right", "enter")).
+  // fetch the standard functions array
+  local kf is list({ set back to con. },
+                   updatemenu@:bind(thismenu, thisbbox,-1, 0),
+                   updatemenu@:bind(thismenu, thisbbox, 1, 0),
+                   updatemenu@:bind(thismenu, thisbbox, 0,-1),
+                   updatemenu@:bind(thismenu, thisbbox, 0, 1),
+                   selectmenu@:bind(thismenu, thisname, thisbbox)).
+  // extend our keypress and key function arrays with the inputted functions.
+  extend(kp, extrakeys). extend(kf, extrafuncs).
+  // if this is not the main menu
+  if not ismainmenu {
+    until back {
+      // check if we have an input to handle
+      local keypressed is checkinputkeys(kp).
+      // if we had an input, execute that function
+      if keypressed >= 0 { kf[keypressed](). }
+      // wait for one physics tick
+      wait 0.
+    }
+  // the main menu has literally the same code
+  } else {
+    // remove the back key things and loop indefinitely
+    kp:remove(0). kf:remove(0). until done {
+      // check if we have an input to handle
+      local keypressed is checkinputkeys(kp).
+      // if we had an input, execute that function
+      if keypressed >= 0 { kf[keypressed](). }
+      // wait for one physics tick
+      wait 0.
+    }
+  }
 }
